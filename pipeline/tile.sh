@@ -34,8 +34,8 @@ tile_fuel () {  # name, filter-expression
   tile-join -o "$TILES/$1.pmtiles" --force --no-tile-size-limit "$TILES/_lo.pmtiles" "$TILES/_hi.pmtiles" 2>/dev/null
   rm -f "$TILES/_lo.pmtiles" "$TILES/_hi.pmtiles"
 }
-tile_fuel all        '{"*":["!=","fuel_type",11]}'   # all generation, storage excluded
-for f in 0 1 2 3 4 5 6 7 8 9 11; do
+tile_fuel all        '{"*":["all",["!=","fuel_type",11],["!=","fuel_type",12]]}'   # all generation; batteries (11) and pumped hydro (12) excluded
+for f in 0 1 2 3 4 5 6 7 8 9 11 12; do
   tile_fuel "fuel$f" "{\"*\":[\"==\",\"fuel_type\",$f]}"
 done
 

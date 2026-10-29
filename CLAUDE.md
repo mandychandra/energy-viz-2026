@@ -77,10 +77,12 @@ python3 pipeline/serve.py         # local test at http://localhost:8000 (plain h
   energy **discharged**. Lists every unit at a plant that has storage, so filter by
   prime mover. **Storage net generation is negative** (round-trip losses); the map
   uses gross discharge. 2024: batteries 14.9 TWh gross vs −2.4 TWh net.
-- Storage = prime mover `BA` battery, `PS` pumped hydro, `FW` flywheel, `CE` CAES,
-  `ES` other. Fuel category **11**. `stype` property carries the sub-type.
+- Storage is two categories: **11 Batteries** (prime mover `BA`, plus the few `FW` flywheel,
+  `CE` CAES, `ES` other units) and **12 Pumped hydro** (`PS`). Both use gross discharge and
+  both are excluded from "All generation". `stype` carries the sub-type. They were one
+  category (11) until Oct 28 2026 evening; caches from before are normalised on load.
 - Fuel categories 0–9 are Chris's (0 gas, 1 coal, 2 nuclear, 3 hydro, 4 wind, 5 solar,
-  6 biomass, 7 other, 8 geothermal, 9 petroleum). 7 is hidden in the UI.
+  6 biomass, 7 other, 8 geothermal, 9 petroleum). 7 is hidden in the UI. 11 batteries, 12 pumped hydro.
 - A plant reporting several categories becomes several features, id `<plant>-<cat>`.
   "Other" rows at a plant with a real fuel are folded into that fuel.
 - EIA-860 `2___Plant_Y2025.xlsx` has coordinates for 99.4 % of 2024 plants but only

@@ -81,7 +81,7 @@
   <button data-chapter="solar">☀️<span>Solar</span></button>
   <button data-chapter="wind">🌬️<span>Wind</span></button>
   <button data-chapter="nuclear">☢️<span>Nuclear</span></button>
-  <button data-chapter="storage">🔋<span>Storage</span></button>
+  <button data-chapter="storage">🔋<span>Batteries</span></button>
   <button data-chapter="explore">🔎<span>Explore</span></button>
 </nav>
 <button id="restart">Revisit tour</button>
@@ -112,7 +112,7 @@
 
 <div class="modal" id="m-storage"><div class="box">
   <h2>🔋 The battery boom</h2>
-  <p>For a century, pumped hydro was the only way to store grid power at scale. Then, starting around 2020, utility-scale batteries arrived — first at Moss Landing in California, then across the Southwest and Texas — and in just a few years overtook pumped hydro. This map shows energy <em>discharged</em> from storage each month, so you can compare it directly with generation.</p>
+  <p>For a century, pumped hydro was the only way to store grid power at scale, and it still delivers about 24 TWh a year from a few dozen plants. Then, starting around 2020, utility-scale batteries arrived — first at Moss Landing in California, then across the Southwest and Texas — and in 2025 they overtook pumped hydro. Batteries and pumped hydro are separate layers here; both show energy <em>discharged</em> to the grid each month, directly comparable with generation.</p>
   <div class="actions"><button data-go="storage">Watch them appear ⚡</button></div>
 </div></div>
 
@@ -133,10 +133,10 @@
 // ---------------------------------------------------------------------------
 const TILE_BASE = new URL('tiles/', location.href).href;
 const FUEL_NAMES = {0:'Natural gas', 1:'Coal', 2:'Nuclear', 3:'Hydro', 4:'Wind', 5:'Solar', 6:'Biomass & waste',
-                    7:'Other', 8:'Geothermal', 9:'Petroleum', 11:'Storage'};
-const FUEL_COLORS = {0:'#ff9f1c', 1:'#e8453c', 2:'#b14cf0', 3:'#3d8bff', 4:'#f5f5f5', 5:'#ffe234', 6:'#3cb44b',
-                     7:'#8a8a8a', 8:'#ff8ad8', 9:'#8b5a2b', 11:'#2ee6d6'};
-const STORAGE = 11, ALL = 'all';
+                    7:'Other', 8:'Geothermal', 9:'Petroleum', 11:'Batteries', 12:'Pumped hydro'};
+const FUEL_COLORS = {0:'#ff9f1c', 1:'#e8453c', 2:'#b14cf0', 3:'#2f6fe0', 4:'#f5f5f5', 5:'#ffe234', 6:'#3cb44b',
+                     7:'#8a8a8a', 8:'#ff8ad8', 9:'#8b5a2b', 11:'#2ee6d6', 12:'#7dd3fc'};
+const STORAGE = 11, PUMPED = 12, STORAGE_CATS = [11, 12], ALL = 'all';
 const TOUR = true;   // false = plain explorable map, no chapters/modals
 const BASE_INTENSITY = 0.75, BASE_RADIUS = 16, WEIGHT_DIVISOR = 2000000;
 const US_BOUNDS = [[-128, 24], [-65, 50]];
@@ -169,7 +169,7 @@ function setup() {
     tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
   });
-  for (const f of [ALL, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11]) {
+  for (const f of [ALL, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]) {
     map.addSource('q-' + f, {type: 'vector', url: `pmtiles://${TILE_BASE}${f === ALL ? 'all' : 'fuel' + f}.pmtiles`, maxzoom: 10});
   }
   map.addSource('plants', {type: 'vector', url: `pmtiles://${TILE_BASE}plants.pmtiles`, minzoom: 9, maxzoom: 10});
@@ -246,7 +246,7 @@ function labelField(cur) {
         '\n', {},
         ['concat', ['number-format', ['round', ['/', ['get', 'netgen'], 1000]], {}], ' GWh  '],
         {'text-font': ['literal', ['Noto Sans Bold']], 'font-scale': 0.85},
-        ['case', ['==', ['get', 'fuel_type'], STORAGE],
+        ['case', ['in', ['get', 'fuel_type'], ['literal', STORAGE_CATS]],
           ['concat',
             ['match', ['get', 'stype'], 'battery', 'Battery', 'pumped', 'Pumped hydro', 'flywheel', 'Flywheel', 'caes', 'Compressed air', 'Storage'],
             ['case', ['has', 'mw'], ['concat', ' · ', ['number-format', ['get', 'mw'], {}], ' MW'], ''],
@@ -375,7 +375,7 @@ function updateMonth() {
 }
 
 function updateNote() {
-  note.style.display = (currentFuel === STORAGE && currentYM().year < totals.storage_data_start_year) ? 'block' : 'none';
+  note.style.display = (STORAGE_CATS.includes(currentFuel) && currentYM().year < totals.storage_data_start_year) ? 'block' : 'none';
   $('scale-note').style.display = (currentFuel !== ALL && currentFuel !== null && map.getZoom() < 9) ? 'block' : 'none';
 }
 map.on('zoomend', updateNote);

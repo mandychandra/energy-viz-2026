@@ -13,7 +13,7 @@ plant coordinates from every EIA-860 zip found, and writes to data/out/:
 
 Fuel categories (0-9 are Chris Loer's; 11 is new):
   0 Gas  1 Coal  2 Nuclear  3 Hydro  4 Wind  5 Solar  6 Bio (renewable carbon)
-  7 Other  8 Geothermal  9 Petroleum  11 Storage (battery / pumped / flywheel / CAES)
+  7 Other  8 Geothermal  9 Petroleum  11 Batteries (incl. flywheel / CAES)  12 Pumped hydro
 
 Storage is keyed by PRIME MOVER (BA, PS, FW, CE, ES), not fuel code, and its
 monthly value is GROSS DISCHARGE from the "Page 1 Energy Storage" sheet
@@ -34,6 +34,7 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -46,7 +47,7 @@ MONTH_FULL = ["january", "february", "march", "april", "may", "june", "july", "a
               "september", "october", "november", "december"]
 
 FUEL_NAMES = {0: "Gas", 1: "Coal", 2: "Nuclear", 3: "Hydro", 4: "Wind", 5: "Solar",
-              6: "Bio", 7: "Other", 8: "Geothermal", 9: "Petroleum", 11: "Storage"}
+              6: "Bio", 7: "Other", 8: "Geothermal", 9: "Petroleum", 11: "Batteries", 12: "Pumped hydro"}
 
 # EIA "Reported Fuel Type Code" -> category. Chris Loer's map plus newer codes.
 FUEL_CODE = {
@@ -65,7 +66,14 @@ FUEL_CODE = {
     "COL": 1, "OOG": 0, "HPS": 11, "OW": 6,
 }
 STORAGE_PM = {"BA": "battery", "PS": "pumped", "FW": "flywheel", "CE": "caes", "ES": "other"}
-STORAGE_CAT = 11
+STORAGE_CAT = 11            # batteries (and the handful of flywheel / compressed-air units)
+PUMPED_CAT = 12             # pumped-storage hydro
+STORAGE_CATS = (STORAGE_CAT, PUMPED_CAT)
+
+
+def storage_cat(pm: pd.Series) -> pd.Series:
+    """Category for storage prime movers: PS -> pumped hydro, everything else -> batteries."""
+    return pd.Series(np.where(pm == "PS", PUMPED_CAT, STORAGE_CAT), index=pm.index)
 PLACEHOLDER_PLANT = 99999  # EIA state-level non-response estimates, not a plant
 
 
@@ -178,7 +186,7 @@ def parse_923(zip_path: Path, year: int) -> pd.DataFrame:
         for i, c in enumerate(ng):
             e[f"m{i}"] = to_num(est[c]).values
         e["cat"] = e["fuel"].map(FUEL_CODE).fillna(7).astype(int)
-        e.loc[e["pm"].isin(STORAGE_PM), "cat"] = STORAGE_CAT
+        e.loc[e["pm"].isin(STORAGE_PM), "cat"] = storage_cat(e.loc[e["pm"].isin(STORAGE_PM), "pm"])
         e.to_csv(CACHE / f"est_{year}.csv", index=False)
         print(f"    {len(e)} state-level EIA estimate rows kept ({e[[f'm{i}' for i in range(12)]].sum().sum() / 1e6:,.0f} TWh)")
     g = g[g["plant id"] != PLACEHOLDER_PLANT].copy()
@@ -229,7 +237,7 @@ def parse_923(zip_path: Path, year: int) -> pd.DataFrame:
     if unknown:
         print(f"    unmapped fuel codes -> Other: {unknown}")
     df["cat"] = df["cat"].fillna(7).astype(int)
-    df.loc[is_storage, "cat"] = STORAGE_CAT
+    df.loc[is_storage, "cat"] = storage_cat(df.loc[is_storage, "pm"])
     df["stype"] = df["pm"].map(STORAGE_PM).fillna("")
     df["year"] = year
     df.to_csv(cache, index=False)
@@ -341,7 +349,7 @@ def impute_year(gen: pd.DataFrame, year: int, est: pd.DataFrame) -> pd.DataFrame
     cand = cand[cand["annual"] > 0]
 
     rows, dropped, placed = [], 0.0, 0.0
-    E = est[est["cat"] != STORAGE_CAT].groupby(["state", "cat"])[mcols].sum()
+    E = est[~est["cat"].isin(STORAGE_CATS)].groupby(["state", "cat"])[mcols].sum()
     for (st, cat), e in E.iterrows():
         grp = cand[(cand["state"] == st) & (cand["cat"] == cat)]
         if grp.empty:
@@ -356,7 +364,7 @@ def impute_year(gen: pd.DataFrame, year: int, est: pd.DataFrame) -> pd.DataFrame
             out[m] = e[m] * w / w.sum()
             placed += float(e[m])
         rows.append(out)
-    sto = cand[cand["cat"] == STORAGE_CAT][["plant_code", "cat", "state", "plant_name", "pm", "fuel", "stype"] + mcols].copy()
+    sto = cand[cand["cat"].isin(STORAGE_CATS)][["plant_code", "cat", "state", "plant_name", "pm", "fuel", "stype"] + mcols].copy()
     for m in mcols:
         if m not in data_months:
             sto[m] = 0.0
@@ -365,7 +373,7 @@ def impute_year(gen: pd.DataFrame, year: int, est: pd.DataFrame) -> pd.DataFrame
     imp["year"] = year
     imp["est"] = True
     print(f"  {year}: completed from EIA state-level estimates: {placed / 1e6:,.1f} TWh allocated to "
-          f"{imp[imp['cat'] != STORAGE_CAT]['plant_code'].nunique():,} non-reporting plants, "
+          f"{imp[~imp['cat'].isin(STORAGE_CATS)]['plant_code'].nunique():,} non-reporting plants, "
           f"{dropped / 1e6:,.1f} TWh unplaceable (no matching plants); storage carried forward {carried / 1e6:,.2f} TWh "
           f"for {sto['plant_code'].nunique()} units")
     return imp
@@ -409,7 +417,7 @@ def load_860m(path: Path):
         pmc = t["prime mover code"].astype(str).str.strip().str.upper()
         fuel = t["energy source code"].astype(str).str.strip().str.upper()
         t["cat"] = fuel.map(FUEL_CODE).fillna(7).astype(int)
-        t.loc[pmc.isin(STORAGE_PM), "cat"] = STORAGE_CAT
+        t.loc[pmc.isin(STORAGE_PM), "cat"] = storage_cat(pmc[pmc.isin(STORAGE_PM)])
         t["stype"] = pmc.map(STORAGE_PM).fillna("")
         t["mw"] = to_num(t["nameplate capacity (mw)"])
         t["mwh"] = to_num(t["nameplate energy capacity (mwh)"]) if "nameplate energy capacity (mwh)" in t else 0.0
@@ -499,6 +507,9 @@ def main() -> None:
         frames.append(parse_923(zp, year))
     gen = pd.concat(frames, ignore_index=True)
     mcols = [f"m{i}" for i in range(12)]
+    # caches written before the batteries / pumped-hydro split carry cat 11 for PS
+    gen.loc[gen["pm"] == "PS", "cat"] = PUMPED_CAT
+    gen.loc[(gen["cat"] == PUMPED_CAT) & (gen["stype"] == ""), "stype"] = "pumped"
 
     # Coverage check. EIA's in-year monthly file carries only the monthly-sample
     # plants individually (annual filers appear as state-level 99999 estimates,
@@ -514,6 +525,7 @@ def main() -> None:
         est_file = CACHE / f"est_{y}.csv"
         if est_file.exists() and not os.environ.get("EXCLUDE_PARTIAL_YEARS"):
             est = pd.read_csv(est_file, dtype={"state": str, "pm": str, "fuel": str})
+            est.loc[est["pm"] == "PS", "cat"] = PUMPED_CAT
             gen = pd.concat([gen, impute_year(gen, y, est)], ignore_index=True)
             estimated_years.append(y)
         else:
@@ -598,8 +610,8 @@ def main() -> None:
         base = {"id": fid, "fuel_type": int(cat), "first": first, "last": last}
         if (code, cat) in est_from.index:
             base["est_from"] = int(est_from.loc[(code, cat)])   # months from here are EIA/state estimates
-        if cat == STORAGE_CAT:
-            base["stype"] = stypes.get(code, "battery")
+        if cat in STORAGE_CATS:
+            base["stype"] = "pumped" if cat == PUMPED_CAT else stypes.get(code, "battery")
         geom = {"type": "Point", "coordinates": [lon, lat]}
         feats_m.append({"type": "Feature", "geometry": geom, "properties": {**base, **monthly}})
         feats_q.append({"type": "Feature", "geometry": geom, "properties": {**base, **quarterly}})
@@ -613,7 +625,7 @@ def main() -> None:
                 if last > int(tl["retired"]):
                     conflicts.append((code, cat, label["name"], int(tl["retired"]), last))
             label["status"] = tl["status"]
-        if cat == STORAGE_CAT:
+        if cat in STORAGE_CATS:
             pm_codes = [k for k, v in STORAGE_PM.items() if v == base["stype"]]
             srow = storage[(storage["plant_code"] == code) & (storage["pm"].isin(pm_codes))] if storage is not None else []
             if len(srow):
@@ -654,13 +666,13 @@ def main() -> None:
                      "mw": round(float(r["mw"]), 1), "mwh": round(float(r["mwh"]), 1)}
             if pd.notna(r["planned"]):
                 props["planned"] = int(r["planned"])
-            if int(r["cat"]) == STORAGE_CAT:
-                props["stype"] = r["stype"] or "battery"
+            if int(r["cat"]) in STORAGE_CATS:
+                props["stype"] = "pumped" if int(r["cat"]) == PUMPED_CAT else (r["stype"] or "battery")
             pf.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(float(r["lon"]), 5), round(float(r["lat"]), 5)]},
                        "properties": props})
         with open(OUT / "planned.geojson", "w") as f:
             json.dump({"type": "FeatureCollection", "features": pf}, f, separators=(",", ":"))
-        pmw = planned[planned["cat"] == STORAGE_CAT]["mw"].sum()
+        pmw = planned[planned["cat"].isin(STORAGE_CATS)]["mw"].sum()
         print(f"wrote planned.geojson: {len(pf)} planned (plant, fuel) units; planned storage {pmw:,.0f} MW")
 
     # --- totals / normalisation ------------------------------------------------
@@ -675,7 +687,8 @@ def main() -> None:
         "reference_year": ref_year,
         "fuel_names": FUEL_NAMES,
         "twh_by_fuel_reference_year": {str(c): round(totals[c].get(ref_year, 0) / 1e6, 1) for c in sorted(totals)},
-        "twh_all_generation_reference_year": round(sum(totals[c].get(ref_year, 0) for c in totals if c != STORAGE_CAT) / 1e6, 1),
+        "twh_all_generation_reference_year": round(sum(totals[c].get(ref_year, 0) for c in totals if c not in STORAGE_CATS) / 1e6, 1),
+        "storage_cats": list(STORAGE_CATS),
         "storage_data_start_year": 2014,
         "partial_final_year": last_month < 11,
         "early_release_years": [y for y in years if y >= early_release_from()],
