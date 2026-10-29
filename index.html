@@ -216,6 +216,7 @@ function setup() {
       id: 'planned-labels', type: 'symbol', source: 'planned', 'source-layer': 'planned', minzoom: 9,
       layout: {
         visibility: 'none', 'text-font': ['Noto Sans Italic'], 'text-size': 12, 'text-max-width': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top',
+        'symbol-sort-key': ['-', 0, ['get', 'mw']],
         'text-field': ['concat', ['get', 'name'], '\nplanned',
           ['case', ['has', 'planned'], ['concat', ' ', ['to-string', ['floor', ['/', ['get', 'planned'], 100]]]], ''],
           ' · ', ['number-format', ['get', 'mw'], {}], ' MW',
@@ -229,6 +230,7 @@ function setup() {
     id: 'plant-labels', type: 'symbol', source: 'labels', 'source-layer': 'labels', minzoom: 10,
     layout: {
       'text-font': ['Noto Sans Regular'], 'text-size': 13, 'text-max-width': 12,
+      'symbol-sort-key': ['-', 0, ['get', 'netgen']],   // where labels collide (co-located plants), the larger one wins
       'text-field': labelField(999912)
     },
     paint: {'text-color': '#fff', 'text-halo-color': '#000', 'text-halo-width': 1}
