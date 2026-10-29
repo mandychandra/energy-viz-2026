@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>US Electric Generation &amp; Storage, 2001–2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta property="og:title" content="A quarter century of US electric generation — now with batteries">
+<meta property="og:description" content="Every US power plant and battery, month by month, 2001 to today. Data from the US Energy Information Administration.">
+<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@4.5.0/dist/pmtiles.js"></script>
+<style>
+  :root { --panel: rgba(18,18,20,.88); --ink: #f2f2f2; --muted: #9a9a9a; --accent: #4f9cf7; --storage: #2ee6d6; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #0c0c0c; color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  button, select { font: inherit; }
+
+  /* ---- time + fuel controls (top) ---- */
+  #controls { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 5; pointer-events: none; }
+  #panel { pointer-events: auto; background: var(--panel); backdrop-filter: blur(6px); border-radius: 10px;
+    padding: 10px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.5); max-width: 760px; margin: 0 auto; }
+  #row1 { display: flex; align-items: center; gap: 10px; }
+  #play { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; cursor: pointer; flex: none; }
+  #month { flex: 1; -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; background: #3a3a40; outline: none; cursor: pointer; }
+  #month::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 28px; border-radius: 4px; background: #fafafa; border: 1px solid #000; }
+  #month::-moz-range-thumb { width: 18px; height: 28px; border-radius: 4px; background: #fafafa; border: 1px solid #000; }
+  #row2 { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  #month-text { font-family: ui-monospace, Menlo, monospace; font-size: 15px; }
+  #fuel { background: #222; color: var(--ink); border: 1px solid #444; border-radius: 6px; padding: 5px 8px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  #year-text { text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 34px; font-weight: 700;
+    margin: 6px 0 0; text-shadow: 0 0 6px #000, 0 0 2px #000; pointer-events: none; }
+  #note { display: none; text-align: center; font-size: 13px; color: var(--storage); text-shadow: 0 0 4px #000; }
+
+  /* ---- tour (bottom) ---- */
+  #tour { position: fixed; bottom: 14px; left: 0; right: 0; z-index: 5; display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; padding: 0 8px; }
+  #tour button { background: var(--panel); color: var(--ink); border: 1px solid #333; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+  #tour button.active { background: var(--accent); border-color: var(--accent); }
+  #tour button span { display: none; }
+  @media (min-width: 640px) { #tour button span { display: inline; margin-left: 4px; } }
+  #restart { display: none; position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 5;
+    background: var(--panel); color: var(--ink); border: 1px solid #333; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+
+  /* ---- modals ---- */
+  .modal { display: none; position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.55); align-items: center; justify-content: center; padding: 16px; }
+  .modal.open { display: flex; }
+  .modal .box { background: #fff; color: #111; border-radius: 10px; max-width: 480px; width: 100%; padding: 20px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+  .modal h2 { margin: 0 0 10px; font-size: 20px; }
+  .modal p { line-height: 1.45; margin: 0 0 12px; }
+  .modal .actions { text-align: right; }
+  .modal .actions button { background: var(--accent); color: #fff; border: 0; padding: 9px 16px; border-radius: 7px; cursor: pointer; font-size: 15px; }
+  .modal small { color: #555; display: block; line-height: 1.5; }
+  .modal a { color: #1b6ad1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; margin: 6px 0 12px; }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; border: 1px solid #0003; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="controls">
+  <div id="panel">
+    <div id="row1">
+      <button id="play" title="Play / pause">▶</button>
+      <input id="month" type="range" min="0" max="0" value="0" step="1">
+    </div>
+    <div id="row2">
+      <div><strong>Electric generation</strong> &nbsp;<span id="month-text">—</span></div>
+      <div><select id="fuel"></select> <span class="hint" id="weighting"></span>
+        <label class="hint" id="planned-toggle" style="display:none;margin-left:8px;cursor:pointer"><input type="checkbox" id="planned"> planned units</label></div>
+    </div>
+  </div>
+  <h1 id="year-text">—</h1>
+  <div id="note">No storage discharge data before 2014</div>
+  <div id="scale-note" class="hint" style="text-align:center;text-shadow:0 0 4px #000;display:none">Brightness is scaled to this fuel's own total — compare places and years, not fuels. Totals: see the menu.</div>
+</div>
+
+<nav id="tour" aria-label="Tour">
+  <button data-chapter="intro" class="active">⚡<span>Overview</span></button>
+  <button data-chapter="solar">☀️<span>Solar</span></button>
+  <button data-chapter="wind">🌬️<span>Wind</span></button>
+  <button data-chapter="nuclear">☢️<span>Nuclear</span></button>
+  <button data-chapter="storage">🔋<span>Storage</span></button>
+  <button data-chapter="explore">🔎<span>Explore</span></button>
+</nav>
+<button id="restart">Revisit tour</button>
+
+<div class="modal" id="m-intro"><div class="box">
+  <h2>⚡ A quarter century of electricity</h2>
+  <p>US electricity generation hovered around 4 PWh a year for two decades — then started climbing again with data centers and electrification. Underneath that flat line is a complete reshuffling: coal collapsed, gas and wind surged, solar went from a rounding error to a major source, and in the last five years batteries appeared out of nowhere.</p>
+  <div class="actions"><button data-go="intro">Show me ✨</button></div>
+</div></div>
+
+<div class="modal" id="m-solar"><div class="box">
+  <h2>☀️ Solar explosion</h2>
+  <p>Utility-scale solar grew from a few experimental plants in the Mojave to one of the cheapest sources of power anywhere — and it is no longer just a California story. Watch Texas, the Carolinas and Florida light up.</p>
+  <div class="actions"><button data-go="solar">Watch it grow 🌞</button></div>
+</div></div>
+
+<div class="modal" id="m-wind"><div class="box">
+  <h2>🌬️ The rise of wind</h2>
+  <p>Wind went from a few Minnesota and California farms to the largest source of power across the Great Plains. Offshore wind is only just beginning to appear on the Atlantic coast.</p>
+  <div class="actions"><button data-go="wind">Look for turbines 💨</button></div>
+</div></div>
+
+<div class="modal" id="m-nuclear"><div class="box">
+  <h2>☢️ Steady nuclear</h2>
+  <p>Nuclear plants remain the largest source of carbon-free power in the country, running flat out year after year. Zoom in on Palo Verde to compare the scale of one plant with everything around it.</p>
+  <div class="actions"><button data-go="nuclear">Compare the scale 🤔</button></div>
+</div></div>
+
+<div class="modal" id="m-storage"><div class="box">
+  <h2>🔋 The battery boom</h2>
+  <p>For a century, pumped hydro was the only way to store grid power at scale. Then, starting around 2020, utility-scale batteries arrived — first at Moss Landing in California, then across the Southwest and Texas — and in just a few years overtook pumped hydro. This map shows energy <em>discharged</em> from storage each month, so you can compare it directly with generation.</p>
+  <div class="actions"><button data-go="storage">Watch them appear ⚡</button></div>
+</div></div>
+
+<div class="modal" id="m-explore"><div class="box">
+  <h2>🔎 Explore</h2>
+  <p>Filter by fuel, press play or drag the slider, and zoom in to see individual plants on satellite imagery. Circle size is that month's generation; labels show lifetime generation, in-service and retirement dates, and for storage, power and energy capacity. Tick <em>planned units</em> to see what's in the pipeline as hollow rings.</p>
+  <div class="legend" id="legend"></div>
+  <small>
+    Data: US Energy Information Administration <a href="https://www.eia.gov/electricity/data/eia923/">Form EIA-923</a> (monthly generation and storage discharge, 2001–2025), <a href="https://www.eia.gov/electricity/data/eia860/">Form EIA-860</a> (plant locations, storage capacity) and <a href="https://www.eia.gov/electricity/data/eia860m/">EIA-860M</a> (in-service, retirement and planned dates). The latest year is EIA's early release; for the current year, plants that report only annually are shown at EIA's state-level estimates, allocated by their prior-year output.<br>
+    Built on Chris Loer's <a href="https://chrisloer.github.io/energy-viz/">2019 map</a> (<a href="https://medium.com/@chrisloer/how-i-built-it-us-electric-generation-map-ed8b2b682eed">how he built it</a>). Basemap © <a href="https://openfreemap.org">OpenFreeMap</a> / <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>; imagery © Esri.
+  </small>
+  <div class="actions"><button data-go="explore">Start looking 🕵️</button></div>
+</div></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+const TILE_BASE = new URL('tiles/', location.href).href;
+const FUEL_NAMES = {0:'Natural gas', 1:'Coal', 2:'Nuclear', 3:'Hydro', 4:'Wind', 5:'Solar', 6:'Biomass & waste',
+                    7:'Other', 8:'Geothermal', 9:'Petroleum', 11:'Storage'};
+const FUEL_COLORS = {0:'#ff9f1c', 1:'#e8453c', 2:'#b14cf0', 3:'#3d8bff', 4:'#f5f5f5', 5:'#ffe234', 6:'#3cb44b',
+                     7:'#8a8a8a', 8:'#ff8ad8', 9:'#8b5a2b', 11:'#2ee6d6'};
+const STORAGE = 11, ALL = 'all';
+const TOUR = true;   // false = plain explorable map, no chapters/modals
+const BASE_INTENSITY = 0.75, BASE_RADIUS = 16, WEIGHT_DIVISOR = 2000000;
+const US_BOUNDS = [[-128, 24], [-65, 50]];
+
+const map = window.map = new maplibregl.Map({
+  container: 'map', style: 'https://tiles.openfreemap.org/styles/dark', hash: true,
+  center: [-99.79, 38.92], zoom: 4, maxBounds: [[-170, 5], [-40, 75]], attributionControl: {compact: true}
+});
+maplibregl.addProtocol('pmtiles', new pmtiles.Protocol().tile);
+
+const $ = id => document.getElementById(id);
+const monthInput = $('month'), monthText = $('month-text'), yearText = $('year-text'), fuelSelect = $('fuel'), note = $('note');
+let totals, months = [], quarters = [], currentFuel = null;
+let timer = null, navTimers = [];
+
+// ---------------------------------------------------------------------------
+// Map setup
+// ---------------------------------------------------------------------------
+Promise.all([fetch('data/out/fuel_totals.json').then(r => r.json()), new Promise(res => map.on('load', res))])
+  .then(([t]) => { totals = t; months = t.months; quarters = t.quarters; setup(); });
+
+function setup() {
+  monthInput.max = months.length - 1;
+  buildFuelSelect();
+
+  const firstSymbol = map.getStyle().layers.find(l => l.type === 'symbol').id;
+
+  map.addSource('satellite', {
+    type: 'raster', tileSize: 256, maxzoom: 19,
+    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+    attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
+  });
+  for (const f of [ALL, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11]) {
+    map.addSource('q-' + f, {type: 'vector', url: `pmtiles://${TILE_BASE}${f === ALL ? 'all' : 'fuel' + f}.pmtiles`, maxzoom: 10});
+  }
+  map.addSource('plants', {type: 'vector', url: `pmtiles://${TILE_BASE}plants.pmtiles`, minzoom: 9, maxzoom: 10});
+  map.addSource('labels', {type: 'vector', url: `pmtiles://${TILE_BASE}labels.pmtiles`, maxzoom: 10});
+  if (totals.has_planned) map.addSource('planned', {type: 'vector', url: `pmtiles://${TILE_BASE}planned.pmtiles`, maxzoom: 10});
+
+  map.addLayer({
+    id: 'satellite', type: 'raster', source: 'satellite', minzoom: 8,
+    paint: {'raster-brightness-max': 0.6, 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 8, 0, 12, 1]}
+  }, firstSymbol);
+
+  map.addLayer({
+    id: 'generation-heatmap', type: 'heatmap', source: 'q-all', 'source-layer': 'gen', maxzoom: 10,
+    paint: {
+      'heatmap-radius': ['interpolate', ['exponential', 2], ['zoom'], 0, BASE_RADIUS, 16, BASE_RADIUS * 256],
+      'heatmap-intensity': ['interpolate', ['exponential', 2], ['zoom'], 0, BASE_INTENSITY, 16, 16 * BASE_INTENSITY],
+      'heatmap-intensity-transition': {duration: 300, delay: 0},
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, 1, 8, 1, 10, 0],
+      'heatmap-weight': 0
+    }
+  }, 'satellite');
+
+  map.addLayer({
+    id: 'plant-circles', type: 'circle', source: 'plants', 'source-layer': 'plants', minzoom: 9,
+    paint: {
+      'circle-radius': 0,
+      'circle-color': ['match', ['get', 'fuel_type'], ...Object.entries(FUEL_COLORS).flatMap(([k, v]) => [+k, v]), '#888'],
+      'circle-opacity': 0.55, 'circle-stroke-width': 1, 'circle-stroke-color': '#000', 'circle-stroke-opacity': 0.5
+    }
+  });
+
+  if (totals.has_planned) {
+    // Planned units (EIA-860M "Planned" tab): hollow rings sized by nameplate MW
+    map.addLayer({
+      id: 'planned-circles', type: 'circle', source: 'planned', 'source-layer': 'planned', minzoom: 5,
+      layout: {visibility: 'none'},
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, ['*', 0.15, ['sqrt', ['get', 'mw']]], 12, ['*', 1.6, ['sqrt', ['get', 'mw']]]],
+        'circle-opacity': 0, 'circle-stroke-width': 1.5, 'circle-stroke-opacity': 0.85,
+        'circle-stroke-color': ['match', ['get', 'fuel_type'], ...Object.entries(FUEL_COLORS).flatMap(([k, v]) => [+k, v]), '#888']
+      }
+    });
+    map.addLayer({
+      id: 'planned-labels', type: 'symbol', source: 'planned', 'source-layer': 'planned', minzoom: 9,
+      layout: {
+        visibility: 'none', 'text-font': ['Noto Sans Italic'], 'text-size': 12, 'text-max-width': 12, 'text-offset': [0, 1.2], 'text-anchor': 'top',
+        'text-field': ['concat', ['get', 'name'], '\nplanned',
+          ['case', ['has', 'planned'], ['concat', ' ', ['to-string', ['floor', ['/', ['get', 'planned'], 100]]]], ''],
+          ' · ', ['number-format', ['get', 'mw'], {}], ' MW',
+          ['case', ['>', ['coalesce', ['get', 'mwh'], 0], 0], ['concat', ' / ', ['number-format', ['get', 'mwh'], {}], ' MWh'], '']]
+      },
+      paint: {'text-color': '#cfcfcf', 'text-halo-color': '#000', 'text-halo-width': 1}
+    });
+  }
+
+  map.addLayer({
+    id: 'plant-labels', type: 'symbol', source: 'labels', 'source-layer': 'labels', minzoom: 10,
+    layout: {
+      'text-font': ['Noto Sans Regular'], 'text-size': 13, 'text-max-width': 12,
+      'text-field': labelField(999912)
+    },
+    paint: {'text-color': '#fff', 'text-halo-color': '#000', 'text-halo-width': 1}
+  });
+
+  updateFuelType();
+  updateMonth();
+  if (TOUR) openModal('intro');
+  else { document.getElementById('tour').style.display = 'none'; monthInput.value = months.length - 1; updateMonth(); }
+}
+
+function labelField(cur) {
+  return ['format',
+        ['get', 'name'], {},
+        '\n', {},
+        ['concat', ['number-format', ['round', ['/', ['get', 'netgen'], 1000]], {}], ' GWh  '],
+        {'text-font': ['literal', ['Noto Sans Bold']], 'font-scale': 0.85},
+        ['case', ['==', ['get', 'fuel_type'], STORAGE],
+          ['concat',
+            ['match', ['get', 'stype'], 'battery', 'Battery', 'pumped', 'Pumped hydro', 'flywheel', 'Flywheel', 'caes', 'Compressed air', 'Storage'],
+            ['case', ['has', 'mw'], ['concat', ' · ', ['number-format', ['get', 'mw'], {}], ' MW'], ''],
+            ['case', ['>', ['coalesce', ['get', 'mwh'], 0], 0], ['concat', ' / ', ['number-format', ['get', 'mwh'], {}], ' MWh'], '']],
+          ['match', ['get', 'fuel_type'], ...Object.entries(FUEL_NAMES).flatMap(([k, v]) => [+k, v]), 'Other']],
+        {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.85},
+        // status line: "retired 12/2005" (EIA-860M record) > "offline since 6/2019" (no output) > "since 1971"
+        ['case',
+          ['all', ['has', 'retired'], ['<=', ['get', 'retired'], cur], ['<', ['get', 'last'], cur]],
+            ['concat', '\nretired ', ['to-string', ['%', ['get', 'retired'], 100]], '/', ['to-string', ['floor', ['/', ['get', 'retired'], 100]]]],
+          ['>=', ['-', cur, ['get', 'last']], 100],
+            ['concat', '\noffline since ', ['to-string', ['%', ['get', 'last'], 100]], '/', ['to-string', ['floor', ['/', ['get', 'last'], 100]]]],
+          ['has', 'online'],
+            ['concat', '\nsince ', ['to-string', ['floor', ['/', ['get', 'online'], 100]]]],
+          ''],
+        {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.8},
+        // plants that only report annually: their current-year months are EIA state estimates
+        ['case', ['all', ['has', 'est_from'], ['>=', cur, ['get', 'est_from']]], '\nestimated (annual reporter)', ''],
+        {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.75, 'text-color': '#cfcfcf'}];
+}
+
+// ---------------------------------------------------------------------------
+// Fuel selector + heatmap intensity normalisation (from fuel_totals.json)
+// ---------------------------------------------------------------------------
+function buildFuelSelect() {
+  const twh = totals.twh_by_fuel_reference_year;
+  const opts = [[ALL, `All generation (${Math.round(totals.twh_all_generation_reference_year).toLocaleString()} TWh)`]];
+  Object.keys(twh).map(Number).filter(k => k !== 7).sort((a, b) => twh[b] - twh[a])
+    .forEach(k => opts.push([k, `${FUEL_NAMES[k]} (${Math.round(twh[k]).toLocaleString()} TWh)`]));
+  fuelSelect.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  $('weighting').textContent = `(${totals.reference_year} totals)`;
+  if (totals.has_planned) {
+    $('planned-toggle').style.display = 'inline';
+    $('planned').onchange = e => { for (const id of ['planned-circles', 'planned-labels']) map.setLayoutProperty(id, 'visibility', e.target.checked ? 'visible' : 'none'); };
+  }
+  $('legend').innerHTML = Object.keys(FUEL_NAMES).filter(k => k != 7)
+    .map(k => `<span><i style="background:${FUEL_COLORS[k]}"></i>${FUEL_NAMES[k]}</span>`).join('');
+}
+
+function setHeatmapIntensity(intensity) {
+  map.setPaintProperty('generation-heatmap', 'heatmap-intensity',
+    ['interpolate', ['exponential', 2], ['zoom'], 0, intensity, 16, 16 * intensity]);
+}
+
+function setLayerSource(layerId, source) {  // remove + re-add in place (MapLibre has no setSource)
+  const layers = map.getStyle().layers, i = layers.findIndex(l => l.id === layerId);
+  const def = layers[i], before = layers[i + 1] && layers[i + 1].id;
+  def.source = source;
+  map.removeLayer(layerId);
+  map.addLayer(def, before);
+}
+
+function updateFuelType() {
+  const fuel = fuelSelect.value === ALL ? ALL : +fuelSelect.value;
+  if (fuel === currentFuel) return;
+  currentFuel = fuel;
+  setHeatmapIntensity(0);  // fade out, swap source, fade back in
+  setTimeout(() => {
+    let ratio = 1;
+    if (fuel !== ALL) ratio = 0.5 * totals.twh_all_generation_reference_year / Math.max(1, totals.twh_by_fuel_reference_year[fuel]);
+    setLayerSource('generation-heatmap', 'q-' + fuel);
+    setHeatmapIntensity(BASE_INTENSITY * ratio);
+    updateMonth();  // re-apply weight expression on the new layer
+  }, 300);
+  map.setFilter('plant-circles', fuel === ALL ? null : ['==', ['get', 'fuel_type'], fuel]);
+  for (const id of ['planned-circles', 'planned-labels']) if (map.getLayer(id)) map.setFilter(id, fuel === ALL ? null : ['==', ['get', 'fuel_type'], fuel]);
+  labelState = null;
+  updateMonth();   // re-applies the label date filter for the new fuel
+  updateNote();
+}
+
+// ---------------------------------------------------------------------------
+// Time slider -> paint expressions (quarterly heatmap interpolated monthly)
+// ---------------------------------------------------------------------------
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function withFuel(dateFilter) {
+  return currentFuel === ALL || currentFuel === null ? dateFilter : ['all', dateFilter, ['==', ['get', 'fuel_type'], currentFuel]];
+}
+let labelState = null;
+function applyLabelState(cur) {
+  const key = cur + ':' + currentFuel;
+  if (key === labelState) return;
+  labelState = key;
+  map.setFilter('plant-labels', withFuel(['<=', ['get', 'first'], cur]));
+  map.setLayoutProperty('plant-labels', 'text-field', labelField(cur), {validate: false});
+  map.setPaintProperty('plant-labels', 'text-color', ['case',
+    ['any', ['>=', ['-', cur, ['get', 'last']], 100], ['all', ['has', 'retired'], ['<=', ['get', 'retired'], cur], ['<', ['get', 'last'], cur]]],
+    '#9a9a9a', '#fff'], {validate: false});
+}
+map.on('zoomend', () => { if (map.getZoom() >= 9.5 && months.length) { const {year, month} = currentYM(); applyLabelState(year * 100 + month + 1); } });
+function currentYM() { const [y, m] = months[+monthInput.value].split('_').map(Number); return {year: y, month: m}; }
+
+function updateMonth() {
+  const i = +monthInput.value, {year, month} = currentYM();
+  const q = `${year}_${Math.floor(month / 3)}`, qi = quarters.indexOf(q);
+  const qn = quarters[qi + 1] || q;
+  const nextMix = quarters[qi + 1] ? (month % 3) / 3 : 0, baseMix = 1 - nextMix;
+
+  const estimated = (totals.estimated_years || []).includes(year);
+  const partial = estimated || (totals.partial_final_year && year === totals.years[totals.years.length - 1]) ||
+                  (totals.early_release_years || []).includes(year);
+  const label = `${MONTH_NAMES[month]} ${year}${estimated ? ' (preliminary · small plants estimated)' : partial ? ' (preliminary)' : ''}`;
+  monthText.textContent = label;
+  yearText.textContent = year + (partial ? ' (prelim.)' : '');
+
+  map.setPaintProperty('generation-heatmap', 'heatmap-weight',
+    ['/', ['max', 0, ['+',
+      ['*', ['to-number', ['get', `netgen_${q}`]], baseMix],
+      ['*', ['to-number', ['get', `netgen_${qn}`]], nextMix]]], WEIGHT_DIVISOR], {validate: false});
+
+  const cur = year * 100 + month + 1;                       // YYYYMM, matches `first`/`last`
+  // "offline": no output for 12+ months (YYYYMM difference >= 100), or formally retired per 860M.
+  // A shorter gap is normal for peakers and seasonal plants and is not flagged.
+  const offline = ['any', ['>=', ['-', cur, ['get', 'last']], 100],
+                          ['all', ['has', 'retired'], ['<=', ['get', 'retired'], cur], ['<', ['get', 'last'], cur]]];
+  map.setPaintProperty('plant-circles', 'circle-radius',
+    ['interpolate', ['linear'], ['zoom'],
+      8, ['case', offline, 4, 0],
+      16, ['case', offline, 4, ['/', ['sqrt', ['max', 0, ['to-number', ['get', `netgen_${year}_${month}`]]]], 5]]], {validate: false});
+  map.setPaintProperty('plant-circles', 'circle-opacity', ['case', offline, 0, 0.55], {validate: false});
+  map.setPaintProperty('plant-circles', 'circle-stroke-color', ['case', offline, '#9a9a9a', '#000'], {validate: false});
+  // Labels need a re-layout when the month changes (hide not-yet-built plants,
+  // mark offline ones), which is expensive, so only do it when labels are visible.
+  if (map.getZoom() >= 9.5) applyLabelState(cur);
+  updateNote();
+}
+
+function updateNote() {
+  note.style.display = (currentFuel === STORAGE && currentYM().year < totals.storage_data_start_year) ? 'block' : 'none';
+  $('scale-note').style.display = (currentFuel !== ALL && currentFuel !== null && map.getZoom() < 9) ? 'block' : 'none';
+}
+map.on('zoomend', updateNote);
+
+// ---------------------------------------------------------------------------
+// Animation + tour
+// ---------------------------------------------------------------------------
+function resetTimers() {
+  map.stop(); clearTimeout(timer); timer = null;
+  navTimers.forEach(clearTimeout); navTimers = [];
+  $('play').textContent = '▶';
+}
+
+function animate(from, increment, done) {
+  resetTimers();
+  monthInput.value = from; updateMonth();
+  $('play').textContent = '❚❚';
+  const last = months.length - 1;
+  const step = () => {
+    const cur = +monthInput.value;
+    if (cur >= last) { timer = setTimeout(() => { resetTimers(); done && done(); }, 800); return; }
+    monthInput.value = Math.min(cur + increment, last); updateMonth();
+    timer = setTimeout(step, 100);
+  };
+  timer = setTimeout(step, 300);
+}
+
+const indexOfYear = y => Math.max(0, months.findIndex(m => +m.split('_')[0] === y));
+
+const chapters = {
+  intro() {
+    setFuel(ALL); animate(0, 8, () => openModal('solar'));
+    map.fitBounds(US_BOUNDS);
+  },
+  solar() {
+    setFuel(5); animate(0, 2, () => openModal('wind'));
+    map.flyTo({center: [-117.4476, 35.0106], zoom: 9.8});          // early Mojave plants
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 10000}), 5000));
+  },
+  wind() {
+    setFuel(4); animate(0, 2, () => openModal('nuclear'));
+    map.flyTo({center: [-96.2652, 44.267], zoom: 9.5});            // Buffalo Ridge, MN
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 10000}), 3000));
+  },
+  nuclear() {
+    setFuel(2); animate(0, 2, () => openModal('storage'));
+    map.fitBounds(US_BOUNDS);
+    navTimers.push(setTimeout(() => map.fitBounds([[-112.9721, 33.4462], [-112.814, 33.2811]], {duration: 6000}), 6000)); // Palo Verde
+  },
+  storage() {
+    setFuel(STORAGE); animate(indexOfYear(2014), 1, () => openModal('explore'));
+    if (totals.has_planned) { $('planned').checked = false; $('planned').onchange({target: $('planned')}); }
+    map.flyTo({center: [-121.78, 36.80], zoom: 10});               // Moss Landing, CA
+    navTimers.push(setTimeout(() => map.fitBounds([[-124, 26], [-95, 42]], {duration: 8000}), 5000));  // CA -> TX
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 6000}), 14000));
+  },
+  explore() {
+    resetTimers(); setFuel(ALL);
+    document.getElementById('tour').style.display = 'none';
+    $('restart').style.display = 'block';
+    map.fitBounds(US_BOUNDS);
+  }
+};
+
+function setFuel(v) { fuelSelect.value = v; updateFuelType(); }
+function setActive(name) { document.querySelectorAll('#tour button').forEach(b => b.classList.toggle('active', b.dataset.chapter === name)); }
+function openModal(name) { resetTimers(); setActive(name); document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); $('m-' + name).classList.add('open'); }
+
+document.querySelectorAll('#tour button').forEach(b => b.onclick = () => openModal(b.dataset.chapter));
+document.querySelectorAll('.modal [data-go]').forEach(b => b.onclick = () => { b.closest('.modal').classList.remove('open'); chapters[b.dataset.go](); });
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+$('restart').onclick = () => { $('restart').style.display = 'none'; $('tour').style.display = 'flex'; openModal('intro'); };
+$('play').onclick = () => {
+  if (timer) { resetTimers(); return; }
+  const cur = +monthInput.value;
+  animate(cur >= months.length - 1 ? 0 : cur, 1);
+};
+monthInput.oninput = () => { resetTimers(); updateMonth(); };
+fuelSelect.onchange = updateFuelType;
+</script>
+</body>
+</html>

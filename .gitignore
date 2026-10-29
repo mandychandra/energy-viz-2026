@@ -1,0 +1,7 @@
+data/raw/
+data/cache/
+data/out/*.geojson
+node_modules/
+.DS_Store
+data/_to_delete/
+pipeline/__pycache__/

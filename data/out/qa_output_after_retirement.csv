@@ -1,0 +1,316 @@
+plant_code,fuel_type,name,retired_860m,last_output_923
+116,5,Ocotillo,201507,201612
+469,1,Cherokee,201508,201708
+473,3,Grand Valley Project Power Plant,202110,202112
+568,9,Bridgeport Station,202110,202602
+609,9,Cape Canaveral,201006,202606
+617,9,Port Everglades,201301,202603
+619,9,Riviera,201102,202604
+621,9,Turkey Point,201312,202608
+645,1,Big Bend,202112,202608
+645,9,Big Bend,200812,201508
+666,9,J D Kennedy,200904,202608
+696,9,Marathon Generating Plant,202505,202603
+700,0,Atkinson,200207,200302
+701,3,Barnett Shoals,201005,201012
+703,9,Bowen,201304,202608
+826,3,Cove,200612,200712
+867,0,Crawford,200503,201208
+891,9,Havana,201201,201910
+898,0,Wood River,201110,201605
+917,3,Quincy Chute,202512,202608
+937,0,Carmi,201307,201309
+997,0,Michigan City,201009,202608
+1046,1,Dubuque,201011,201109
+1047,9,Lansing,201403,202212
+1077,1,Sutherland,201011,201204
+1081,1,Riverside,201308,201503
+1124,9,Atlantic,201612,202312
+1206,9,Summit Lake,200701,202608
+1265,9,Burlingame,200203,202412
+1299,0,Larned,201012,201207
+1300,0,Lincoln,201705,202608
+1353,1,Big Sandy,201505,201511
+1361,9,Tyrone,200702,201102
+1472,3,Howland Hydro Station,201501,201512
+1487,3,Continental Mills,200609,200612
+1554,1,Herbert A Wagner,202006,202309
+1572,9,Dickerson Power,202210,202608
+1594,9,Blackstone Street,200304,200312
+1597,9,Oak Bluffs Diesel Generating Facility,202509,202608
+1660,9,Potter Station 2,201405,202608
+1682,9,Cleary Flood Hybrid,202012,202601
+1695,0,B C Cobb,201505,201604
+1710,9,J H Campbell,201811,202608
+1723,9,J R Whiting,201505,201604
+1726,9,Conners Creek,201303,201307
+1740,0,River Rouge,201612,202103
+1743,9,St Clair,202406,202603
+1826,9,Grand Haven Diesel Plant,201610,201912
+1829,9,Hillsdale,201806,202608
+1844,9,Marshall (MI),201505,202012
+1855,9,Sturgis City Diesel Plant,200803,202608
+1881,9,Vestaburg,201706,202310
+1888,9,Fox Lake,201011,201112
+1971,6,Elk River City of,202210,202212
+1978,9,Hawley,200908,200912
+1980,9,Hutchinson Plant #1,201102,202012
+2018,1,Virginia,200608,202012
+2022,1,Willmar,200612,201803
+2071,9,Paulding,201708,201712
+2114,9,Bethany,201210,201212
+2162,9,Main Street,201010,201012
+2231,9,Crete,201304,202608
+2313,0,West Point Municipal,201811,202608
+2384,9,Deepwater,200404,200812
+2390,9,Sayreville,200402,202608
+2399,9,Burlington Generating Station,201506,202608
+2403,9,PSEG Hudson Generating Station,200310,200710
+2404,9,Kearny Generating Station,200506,202608
+2406,9,Linden Generating Station,200605,202603
+2411,9,Sewaren,201506,202602
+2434,9,Howard Down,201209,202411
+2465,3,Animas,200612,201807
+2468,0,Raton,201210,201212
+2527,1,Greenidge Generation LLC,200912,201103
+2594,0,Oswego Harbor Power,200312,202607
+2629,0,Lovett,200705,200804
+2695,9,Charles P Keller,201812,202605
+2712,9,Roxboro,200712,202608
+2721,1,James E. Rogers Energy Complex,201110,202608
+2864,9,FirstEnergy R E Burger,201509,201512
+2878,1,FirstEnergy Bay Shore,201209,201612
+3113,1,Portland (PA),201306,201405
+3134,9,Wayne,200402,200412
+3140,9,Brunner Island,201802,202412
+3148,1,TalenEnergy Martins Creek,200709,200710
+3148,9,TalenEnergy Martins Creek,200709,202608
+3149,1,TalenEnergy Montour,201902,202403
+3250,9,Darlington County,202003,202607
+3254,3,Buzzard Roost,202112,202212
+3281,9,Coit GT,202512,202608
+3298,0,Williams,202209,202608
+3492,0,Morgan Creek,201202,202608
+3527,0,San Angelo,200410,200412
+3602,0,Ty Cooke,202310,202312
+3655,3,Olmstead,201509,201512
+3665,9,Bountiful City,201103,201311
+3849,3,Naches,200310,200312
+4014,9,Wheaton,202401,202605
+4041,0,South Oak Creek,200809,202608
+4078,0,Weston,202306,202608
+4125,0,Manitowoc,201712,202605
+4125,1,Manitowoc,200312,202608
+4259,9,Endicott Station,201205,201403
+6043,9,Martin,201812,202606
+6049,9,West Tisbury Generating Facility,202509,202608
+6594,0,Rockport (MO),201111,201112
+7044,3,Bates Mill Upper,200609,200612
+7048,3,Hill Mill,200609,200712
+7111,9,Heber City,200508,201212
+7113,3,PEC Headworks,202512,202608
+7131,0,Brandon Station,202310,202312
+7378,9,United Hospital,201708,201907
+7505,9,Fergus Control Ctr,201910,201912
+7575,9,Bowling Green,201808,201812
+7577,9,Jackson (OH),201806,201812
+7578,9,Napoleon,201806,201812
+7579,9,Niles,201806,201812
+7580,9,Wadsworth,201806,201812
+7781,9,Arcanum Peaking,202209,202212
+7793,9,Kaukauna Diesels,200305,200312
+7882,4,Glenmore Turbines,201209,201212
+7896,9,Kickapoo,200509,200512
+7944,9,Bethany II,201210,201212
+7955,6,Elk City Station,202510,202608
+8009,0,Auburn State Street,201910,201912
+8017,9,Gallatin #2,200309,200312
+8027,9,Blue Lake,202505,202608
+10025,1,"RED-Rochester, LLC",200703,201803
+10025,9,"RED-Rochester, LLC",200703,202312
+10026,0,Encina Water Pollution Control,200805,202608
+10037,6,Siskiyou Forest Products,200212,200310
+10044,0,Schweitzer Mauduit International,200205,200212
+10045,6,Kinsleys Landfill,201410,201412
+10048,0,Central Utilities Plant LAX,201310,201312
+10050,6,Fourche Creek Wastewater,201101,202202
+10110,0,Frito-Lay Cogen Plant,202109,202112
+10202,1,Fernandina Beach Mill,200312,202511
+10223,1,AG Processing Inc,201410,201412
+10224,9,Merck Rahway Power Plant,200711,202602
+10252,6,Domtar Kingsport Mill,200610,202608
+10360,1,Consumer Operations LLC,201410,202012
+10376,0,Entenmanns Cogeneration Facility,200408,200412
+10454,0,Newark Atlantic Paperboard,200209,200212
+10466,7,Wisconsin Rapids Paper Mill,202006,202012
+10562,9,Fernandina Plant,200512,202608
+10606,6,Georgia-Pacific Crossett LLC,201910,201911
+10607,6,Georgia Pacific Fort Bragg,200201,200203
+10611,0,Georgia-Pacific Palatka Operations,201606,202608
+10626,1,Kannapolis Energy Partners,200307,200312
+10698,0,Graphic Packaging,201910,201912
+10700,0,Red Shield Envir Old Town Facility,201312,202304
+10700,9,Red Shield Envir Old Town Facility,201312,202303
+10701,0,Wausau Papers of New Hampshire,200804,200812
+10729,0,Cargill Corn Wet Milling Plant,201004,201501
+10764,6,Blue Lake Power LLC,201505,201612
+10788,0,Belle West Virginia Plant,200509,200512
+10797,0,Old Hickory Plant,201010,201012
+10815,4,Difwind Farms Ltd VII,201411,201512
+10829,0,Coca Cola Bottling of New York,200611,200612
+10829,9,Coca Cola Bottling of New York,200611,200612
+50057,0,Salk Institute,200407,200412
+50095,3,Tillotson Rubber,201111,201112
+50095,6,Tillotson Rubber,201111,201112
+50113,6,Renegy Susanville,200405,200412
+50121,0,Valero Refinery Corpus Christi West,200608,202608
+50153,0,Texas City Plant Union Carbide,201410,202608
+50158,3,Edenville,201809,201812
+50165,0,Sea World of Calif 4160 V Cogen System,200211,200212
+50173,0,Rowan University,200611,200612
+50189,1,Domtar Paper Co LLC Plymouth NC,200605,201010
+50200,0,B Braun Medical,202503,202603
+50221,1,R J Reynolds Tobaccoville Utility Plant,200403,200412
+50245,0,International Paper Courtland Mill,201308,201402
+50260,0,Corewell Health Dearborn Campus,200410,200412
+50275,1,Park 500 Philip Morris USA,201309,201412
+50276,4,Wintec Energy Ltd,201505,202112
+50316,0,Bunge North America East LLC,202507,202607
+50317,0,Love Box,200709,200712
+50333,6,Gay Robinson,200911,200912
+50341,0,PCS Nitrogen Fertilizer LP,200512,200612
+50407,1,Mobile Energy Services LLC,200404,201212
+50482,9,Clewiston Sugar House,200605,202608
+50530,0,Equilon Los Angeles Refining,202511,202608
+50544,3,Port Townsend Paper,201209,201212
+50621,9,Central Power Plant,201404,202602
+50725,0,Blackjack Creek Treating,200405,200412
+50728,0,ExxonMobil Garden City Gas Plant,200211,200212
+50745,0,Growgen,200208,200212
+50746,0,Coidgen,200208,200212
+50872,6,Wheelabrator Claremont Facility,201309,201312
+50964,8,Amedee Geothermal Venture I,201411,201412
+51029,0,Brown University Central Heating,201004,201012
+52034,0,Bunge Oil,201706,201712
+52089,9,Celanese Acetate LLC,200312,201503
+52091,0,NewYork-Presbyterian Brooklyn Methodist,201508,202312
+52105,0,Richmond Refinery TG800,200601,201312
+52148,9,Elkton,202110,202602
+52152,0,International Paper Franklin Mill,201806,202608
+52198,0,JRW Associates LP,200810,200812
+52199,0,Ridgewood/Byron Power Partners,200810,200812
+52200,6,LFG Energy,200307,200312
+52207,6,Santa Clara,200511,200512
+54050,3,Glines Hydroelectric Project,201106,201112
+54051,3,Elwha Hydroelectric Project,201106,201112
+54101,6,Georgia-Pacific Cedar Springs,202507,202607
+54201,1,Iowa State University,200406,202212
+54216,0,U S Alliance Coosa Pines,201901,202608
+54216,1,U S Alliance Coosa Pines,200811,201403
+54226,0,PCS Nitrogen Fertilizer LP,200306,200312
+54228,9,Erving Paper Mills,201101,202604
+54245,9,Nelson Plant Generators,201109,201112
+54281,6,Interstate Paper LLC Riceboro,202509,202608
+54286,0,Rolls Royce,201104,201612
+54335,1,Morton Salt Rittman,201501,201612
+54373,0,Southbridge Energy Center LLC,201107,201112
+54405,6,Kapaa Hawaii,200203,200212
+54416,0,Roche Vitamins,200509,200512
+54520,6,Village Creek Water Reclamation Facility,200310,201907
+54534,0,St Josephs Hospital,201801,201812
+54562,0,Longview Fibre,200210,202608
+54659,6,Kankakee Gas Recovery,201707,201712
+54745,6,M C Dixon Lumber,200802,200812
+54807,0,Vineland Cogeneration Plant,200402,200412
+54811,0,Kansas State Univ Main Campus,200410,200512
+54842,6,Outagamie County Co-Generation Facility,202011,202012
+54857,1,Niagara Mill,200806,200807
+54866,9,Bradford Dyeing Association,200710,200712
+54884,0,The American Sugar Refining Co Brooklyn,200401,200412
+54913,0,Anheuser-Busch Newark Brewery,200404,200412
+54965,1,Cargill Salt,200201,201412
+54967,9,Alliant SBD 9302 Aegon NP,202111,202112
+54976,0,Morton Salt Grand Saline,200508,200512
+55025,0,Yates Gas Plant,201908,201912
+55049,6,Sierra Pacific Anderson Facility,201507,201512
+55073,6,Wheeler Landfill Gas Recovery,200305,200412
+55092,6,O'Brien Biogas IV LLC,200810,200812
+55093,6,MM Taunton Energy,202512,202608
+55095,6,Lowell Landfill,200710,200812
+55134,0,Blacks Fork Gas Processing Plant,200304,200312
+55163,6,MM Hartford Energy,201807,201812
+55243,9,Astoria Gas Turbines,201905,202305
+55488,6,Blackburn Landfill Co-Generation,202207,202212
+55556,6,Security,202404,202412
+55587,6,GRS Richmond,201309,201312
+55588,6,GRS Sunset Farms,201604,201612
+55589,6,GRS Fall River,202201,202212
+55591,6,Rockford Electric,200907,200912
+55593,6,Quad Cities,200809,200812
+55600,0,Binghamton Cogen,201801,201812
+55602,6,North City - Landfill Gas Engines South,202203,202212
+55761,6,Devonshire Power Partners LLC,200909,200912
+55768,6,Avon Energy Partners LLC,200808,200812
+55772,6,P.E.R.C.,200904,200912
+56024,6,Berlin Gorham,200604,200612
+56024,9,Berlin Gorham,200604,200612
+56040,0,Solo Cup Co,201204,201212
+56045,0,Millennium Hawkins Point,200906,200912
+56058,9,"High Point, Jackson Lake",200711,200712
+56073,0,Alliant SBG 9802 Toyota,202510,202608
+56080,6,SJ/SC WPCP,201702,202608
+56124,0,SPFT - Newberg Cogen,200812,201601
+56163,1,Kennecott Power Plant,201912,202608
+56171,6,Milliken Plant,201405,201412
+56176,9,BNWRD,201410,201412
+56226,4,Bowling Green Wind,202503,202603
+56376,4,Pike County Wind Power,202511,202606
+56461,6,Dry Creek LFG to Energy Project,202607,202608
+56462,9,Geneva Generation Facility,201111,201112
+56513,0,Whitemarsh Central Utility Plant,202205,202312
+56528,6,Skyline Gas Recovery,201911,201912
+56533,6,Bradley Gas Recovery,201305,201312
+56599,9,Jefferson Street Substation,201203,201212
+56976,5,Solar Photovoltaic Project #01,201111,201112
+56987,6,Hyland LFGTE Facility,202506,202606
+57071,6,Denton Power LLC,202009,202012
+57076,6,South Columbus Water Resource Facility,201812,201905
+57336,5,DE Solar 1725 Drywall Dr,202507,202605
+57513,6,Central Ohio BioEnergy Plant #1,201111,201112
+57584,11,University of California San Diego Hybri,202506,202507
+57625,6,"Bos Dairy, LLC",201508,201812
+57741,4,Suzlon Project VIII LLC,202007,202012
+57759,0,Consumer Operations LLC,201804,201805
+57811,0,Adobe San Jose,201703,202012
+57829,6,Glendale Energy Power Plant,201906,201912
+57939,5,Walmart Casa Grande,202309,202312
+57952,0,Woodall Gas Plant,202003,202012
+58253,0,CBS Television City,202309,202312
+58256,11,Los Alamos PV Site,201911,202008
+58300,0,Honda Torrance,202303,202312
+58382,0,Threemile Digester,202603,202608
+58424,4,Harbor Wind LLC,201908,201912
+58442,0,ACI Energy Partners LLC,201409,201412
+58574,6,Eagle Valley Clean Energy LLC Biomass,202403,202404
+58815,0,Hilton NY Co Gen Plant,202207,202212
+59142,6,Manatee County LFGTE,201911,201912
+59260,6,"Hidden View Dairy, LLC",202106,202212
+59447,6,Pacific Rim Dairy Digester,201807,201812
+59457,0,Q Plant,202304,202412
+59759,6,Glades Pike Generation Plant,202605,202608
+59841,5,General Motors Corp at White Marsh MD,202105,202112
+60297,11,Clinton Battery,202602,202608
+60660,11,Willey Battery Utility,202509,202608
+60804,5,"Gemini Technologies Services, Inc. Solar",202211,202212
+61027,0,Pacific Ethanol Stockton Cogen Plant,201907,201912
+61162,5,RB Manufacturing LLC Belle Mead NJ,202008,202012
+61491,5,First Citizens Bank,201811,201812
+61632,0,"Golden Renewable Energy, LLC",201808,201812
+61652,6,"Fiber Recovery, Inc.",202411,202412
+61839,5,FECC Solar Benton,202409,202410
+62736,0,Harbec Energy,202511,202608
+62736,4,Harbec Energy,202511,202608
+62920,0,Burrstone Energy Center,202408,202412
+63098,9,Hannibal - Water Treatment Plant,202107,202112
+65203,0,Beckton Dickenson - San Jose,202406,202407
+65494,0,Herrema Dairy,202501,202601
