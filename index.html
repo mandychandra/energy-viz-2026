@@ -250,7 +250,8 @@ function labelField(cur) {
           ['concat',
             ['match', ['get', 'stype'], 'battery', 'Battery', 'pumped', 'Pumped hydro', 'flywheel', 'Flywheel', 'caes', 'Compressed air', 'Storage'],
             ['case', ['has', 'mw'], ['concat', ' · ', ['number-format', ['get', 'mw'], {}], ' MW'], ''],
-            ['case', ['>', ['coalesce', ['get', 'mwh'], 0], 0], ['concat', ' / ', ['number-format', ['get', 'mwh'], {}], ' MWh'], '']],
+            ['case', ['>', ['coalesce', ['get', 'mwh'], 0], 0], ['concat', ' / ', ['number-format', ['get', 'mwh'], {}], ' MWh'], ''],
+            ['case', ['has', 'mw_ret'], ['concat', ' · ', ['number-format', ['get', 'mw_ret'], {}], ' MW retired'], '']],
           ['match', ['get', 'fuel_type'], ...Object.entries(FUEL_NAMES).flatMap(([k, v]) => [+k, v]), 'Other']],
         {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.85},
         // status line: "retired 12/2005" (EIA-860M record) > "offline since 6/2019" (no output) > "since 1971"

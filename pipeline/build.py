@@ -295,14 +295,26 @@ def load_860(zips: list[Path]) -> tuple[pd.DataFrame, pd.DataFrame]:
                     "mwh": to_num(s["nameplate energy capacity (mwh)"]),
                     "tech": s["storage technology 1"].astype(str).str.upper().str.strip(),
                     "op_year": pd.to_numeric(s["operating year"], errors="coerce"),
+                    "retired": s["status"].astype(str).str.upper().eq("RE"),
                 }).dropna(subset=["plant_code"])
-                storage = (s.groupby(["plant_code", "pm"], as_index=False)
-                            .agg(mw=("mw", "sum"), mwh=("mwh", "sum"),
-                                 tech=("tech", lambda t: t.mode().iat[0] if len(t.mode()) else ""),
-                                 op_year=("op_year", "min")))
+                # Operating capacity and retired capacity are kept apart: a plant that
+                # lost a unit (Moss Landing's 300 MW, Jan 2025) must not show it as
+                # installed. Labels show operating MW/MWh and name retired MW separately;
+                # a plant whose units are all retired keeps its retired figures.
+                agg = lambda d: (d.groupby(["plant_code", "pm"], as_index=False)
+                                  .agg(mw=("mw", "sum"), mwh=("mwh", "sum"),
+                                       tech=("tech", lambda t: t.mode().iat[0] if len(t.mode()) else ""),
+                                       op_year=("op_year", "min")))
+                op, re_ = agg(s[~s["retired"]]), agg(s[s["retired"]]).rename(columns={"mw": "mw_ret", "mwh": "mwh_ret", "tech": "tech_ret", "op_year": "op_year_ret"})
+                storage = op.merge(re_, on=["plant_code", "pm"], how="outer")
+                only_ret = storage["mw"].isna()
+                for c in ("mw", "mwh", "tech", "op_year"):
+                    storage.loc[only_ret, c] = storage.loc[only_ret, c + "_ret"]
+                storage["mw_ret"] = storage["mw_ret"].fillna(0.0)
+                storage["mw"], storage["mwh"] = storage["mw"].fillna(0.0), storage["mwh"].fillna(0.0)
                 storage["plant_code"] = storage["plant_code"].astype(int)
                 print(f"  {zp.name}: storage inventory {len(storage)} (plant, prime mover) units, "
-                      f"{storage['mw'].sum():,.0f} MW")
+                      f"{storage.loc[~only_ret, 'mw'].sum():,.0f} MW operating, {storage['mw_ret'].sum():,.0f} MW retired")
     # Pumped storage capacity lives in the generator file, not 3_4_Energy_Storage
     with Archive(sorted(zips, reverse=True)[0]) as zf:
         try:
@@ -316,6 +328,7 @@ def load_860(zips: list[Path]) -> tuple[pd.DataFrame, pd.DataFrame]:
             ps = ps.dropna(subset=["plant_code"]).groupby(["plant_code", "pm"], as_index=False).agg(
                 mw=("mw", "sum"), mwh=("mwh", "sum"), tech=("tech", "first"), op_year=("op_year", "min"))
             ps["plant_code"] = ps["plant_code"].astype(int)
+            ps["mw_ret"] = 0.0
             storage = pd.concat([storage, ps], ignore_index=True)
             print(f"  pumped storage from generator file: {len(ps)} plants, {ps['mw'].sum():,.0f} MW")
         except (ValueError, IndexError) as e:
@@ -634,6 +647,8 @@ def main() -> None:
                 label["tech"] = srow["tech"].iat[0]
                 if pd.notna(srow["op_year"].min()):
                     label["op_year"] = int(srow["op_year"].min())
+                if "mw_ret" in srow and float(srow["mw_ret"].sum()) > 0 and label["mw"] > 0:
+                    label["mw_ret"] = round(float(srow["mw_ret"].sum()), 1)   # retired units, not installed
             elif tl is not None and tl["mw"] > 0:          # e.g. units added in 2026, or retired ones
                 label["mw"], label["mwh"] = round(float(tl["mw"]), 1), round(float(tl["mwh"]), 1)
                 label["tech"] = str(tl["tech"])
