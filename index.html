@@ -32,6 +32,11 @@
   #year-text { text-align: center; font-family: ui-monospace, Menlo, monospace; font-size: 34px; font-weight: 700;
     margin: 6px 0 0; text-shadow: 0 0 6px #000, 0 0 2px #000; pointer-events: none; }
   #note { display: none; text-align: center; font-size: 13px; color: var(--storage); text-shadow: 0 0 4px #000; }
+  #battery-note { display: none; max-width: 620px; margin: 4px auto 0; padding: 7px 12px; border-radius: 8px;
+    background: var(--panel); color: var(--ink); font-size: 12px; line-height: 1.45; text-align: center; pointer-events: auto; }
+  #battery-note summary { cursor: pointer; color: var(--storage); font-weight: 600; }
+  @media (min-width: 641px) { #battery-note summary { display: none; } }
+  @media (max-width: 640px) { #battery-note { padding: 5px 10px; } #battery-note[open] summary { margin-bottom: 4px; } }
 
   /* ---- tour (bottom) ---- */
   #tour { position: fixed; bottom: 14px; left: 0; right: 0; z-index: 5; display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; padding: 0 8px; }
@@ -73,6 +78,7 @@
   </div>
   <h1 id="year-text">—</h1>
   <div id="note">No storage discharge data before 2014</div>
+  <details id="battery-note" open><summary>What the battery numbers mean</summary>Monthly energy discharged to the grid by utility-scale batteries, in gross MWh (EIA-923). These totals are stored energy released, not new generation, so they are excluded from “All generation.” The monthly total is not storage capacity, is not net of charging, and does not include capacity held in reserve for ancillary services. It shows how much energy was discharged, not when or why.</details>
   <div id="scale-note" class="hint" style="text-align:center;text-shadow:0 0 4px #000;display:none">Brightness is scaled to this fuel's own total — compare places and years, not fuels. Totals: see the menu.</div>
 </div>
 
@@ -378,10 +384,17 @@ function updateMonth() {
 }
 
 function updateNote() {
-  note.style.display = (STORAGE_CATS.includes(currentFuel) && currentYM().year < totals.storage_data_start_year) ? 'block' : 'none';
+  const preStorage = currentYM().year < totals.storage_data_start_year;
+  note.style.display = (STORAGE_CATS.includes(currentFuel) && preStorage) ? 'block' : 'none';
+  $('battery-note').style.display = (currentFuel === STORAGE && !preStorage) ? 'block' : 'none';
   $('scale-note').style.display = (currentFuel !== ALL && currentFuel !== null && map.getZoom() < 9) ? 'block' : 'none';
 }
 map.on('zoomend', updateNote);
+// Phones: the battery note starts collapsed to its summary line; wider screens always show it in full.
+const narrow = matchMedia('(max-width: 640px)');
+const syncBatteryNote = () => { $('battery-note').open = !narrow.matches; };
+narrow.addEventListener('change', syncBatteryNote);
+syncBatteryNote();
 
 // ---------------------------------------------------------------------------
 // Animation + tour
