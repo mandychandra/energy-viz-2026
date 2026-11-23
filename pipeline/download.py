@@ -17,7 +17,7 @@ BASE_923 = "https://www.eia.gov/electricity/data/eia923"
 BASE_860 = "https://www.eia.gov/electricity/data/eia860"
 
 FIRST_YEAR = 2001
-LATEST_923 = 2026  # 2025 = early release, 2026 = monthly (through Aug 2026 as of Oct 2026)
+LATEST_923 = 2026  # 2025 = final, 2026 = monthly (through Aug 2026 as of Oct 2026)
 FINAL_923 = 2024   # last year that lives under /archive/
 
 urls = []

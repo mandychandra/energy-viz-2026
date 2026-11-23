@@ -98,7 +98,7 @@ python3 pipeline/serve.py         # local test at http://localhost:8000 (plain h
 - Each feature carries `first`/`last` = YYYYMM of its first and last month with output.
   The UI hides plants before `first` and shows a grey ring + "offline since" label
   after `last` (derived from EIA-923 output, not from EIA-860 retirement dates).
-- 2025 is EIA early-release (full plant coverage, not fully validated). The 2026
+- 2025 is EIA's final release (Sept 2026; full plant coverage); 2026 is preliminary. The 2026
   in-year monthly file only carries the ~3,200 monthly-sample plants individually;
   the ~10,000 annual filers (27 % of wind, 49 % of hydro, 23 % of solar output in
   2024) appear only as state-level 99999 estimates, which are dropped. `build.py`

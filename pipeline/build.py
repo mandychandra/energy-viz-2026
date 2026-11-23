@@ -484,10 +484,10 @@ def load_860m(path: Path):
 
 # ----------------------------------------------------------------------------
 def early_release_from() -> int:
-    """First data year that is still EIA 'early release' (finals arrive ~September of the next year)."""
+    """First data year that is not yet final (EIA finals arrive ~September of the next year)."""
     import datetime
     t = datetime.date.today()
-    return t.year - 1 if t.month >= 10 else t.year - 2
+    return t.year if t.month >= 10 else t.year - 1
 
 
 def main() -> None:
