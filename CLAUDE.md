@@ -105,6 +105,18 @@ python3 pipeline/serve.py         # local test at http://localhost:8000 (plain h
   therefore excludes any year whose plant count falls below 60 % of the prior year
   (prints "EXCLUDING"); set `INCLUDE_PARTIAL_YEARS=1` to keep it anyway.
 
+## Negative net generation (Nov 23 2026)
+
+- EIA-923 net generation is negative when station use exceeds output (57,600 plant-fuel months,
+  −17.9 TWh; mostly petroleum, gas, coal). `build.py` sets these to zero after netting units within
+  a plant×fuel, before clustering, and keeps the months in the label property `neg`
+  (",YYYYMM,...,") → "no net generation this month". Totals always counted positive months only
+  (0.014 % above EIA net in 2025). Never take absolute values: that turns consumption into output.
+- The 2001–2002 files have no usable prime mover, so pumped storage sat under WAT as hydro. Rows at
+  plants that are pumped-only in 2003–2005 (or mixed, with a net-negative year) are moved to
+  category 12 and zeroed like all pre-2014 storage: 54 rows, −0.2 / −0.3 TWh of hydro. Mixed
+  single-row plants with a positive year stay in hydro.
+
 ## Accuracy invariants (verified on the 2003/2024/860-2025 files)
 
 - Storage rows are 1:1 between Page 1 and the Energy Storage sheet (786 = 786 in

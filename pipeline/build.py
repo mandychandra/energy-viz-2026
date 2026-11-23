@@ -524,6 +524,21 @@ def main() -> None:
     gen.loc[gen["pm"] == "PS", "cat"] = PUMPED_CAT
     gen.loc[(gen["cat"] == PUMPED_CAT) & (gen["stype"] == ""), "stype"] = "pumped"
 
+    # The 2001-2002 files have no usable prime mover, so pumped storage sits under WAT.
+    # Treat a WAT row as pumped storage if the plant is pumped-only in 2003-2005, or has
+    # both kinds then and the row is net negative for the year. Like all pre-2014 storage
+    # it contributes nothing (no discharge data).
+    later = gen[gen["year"].between(2003, 2005)]
+    ps_plants = set(later.loc[later["pm"] == "PS", "plant_code"])
+    hy_plants = set(later.loc[(later["pm"] == "HY") & (later["fuel"] == "WAT"), "plant_code"])
+    early_ps = (gen["year"].between(2001, 2002) & (gen["fuel"] == "WAT") & gen["plant_code"].isin(ps_plants)
+                & (~gen["plant_code"].isin(hy_plants) | (gen[mcols].sum(axis=1) < 0)))
+    print(f"2001-2002 pumped storage reported as hydro: {int(early_ps.sum())} rows, "
+          f"{gen.loc[early_ps, mcols].clip(lower=0).sum().sum() / 1e6:.2f} TWh positive, "
+          f"{gen.loc[early_ps, mcols].clip(upper=0).sum().sum() / 1e6:.2f} TWh negative -> removed")
+    gen.loc[early_ps, "cat"], gen.loc[early_ps, "stype"] = PUMPED_CAT, "pumped"
+    gen.loc[early_ps, mcols] = 0.0
+
     # Coverage check. EIA's in-year monthly file carries only the monthly-sample
     # plants individually (annual filers appear as state-level 99999 estimates,
     # which we drop). A year whose plant count collapses vs the previous year is
@@ -587,6 +602,17 @@ def main() -> None:
               [(int(c), names.get(c, "?"), f"{v / 1e3:,.0f} GWh") for c, v in top_missing.items()])
     agg = agg[agg["plant_code"].isin(have)]
 
+    # Negative net generation (station use exceeds output) is kept as a label flag and
+    # set to zero, so it cannot offset other months or neighbours in quarterly clusters.
+    # Done after units are netted within a plant x fuel; totals already counted only
+    # positive months.
+    neg = agg.melt(id_vars=["plant_code", "cat", "year"], value_vars=mcols, var_name="m", value_name="v")
+    neg = neg[neg["v"].round() < 0]
+    neg = neg.assign(ym=neg["year"] * 100 + neg["m"].str[1:].astype(int) + 1).sort_values("ym")
+    print(f"negative plant-fuel months set to zero: {len(neg):,}, {neg['v'].sum() / 1e6:.2f} TWh")
+    neg_months = neg.groupby(["plant_code", "cat"])["ym"].agg(list).to_dict()
+    agg[mcols] = agg[mcols].clip(lower=0)
+
     # --- build features --------------------------------------------------------
     # Long format (one row per plant, category, year, month with non-zero output)
     # is far faster than iterating rows of the wide table.
@@ -629,6 +655,9 @@ def main() -> None:
         feats_m.append({"type": "Feature", "geometry": geom, "properties": {**base, **monthly}})
         feats_q.append({"type": "Feature", "geometry": geom, "properties": {**base, **quarterly}})
         label = {**base, "name": names.get(code, name860), "netgen": round(lifetime)}
+        negs = [ym for ym in neg_months.get((code, cat), []) if ym >= first]
+        if negs:
+            label["neg"] = "," + ",".join(map(str, negs)) + ","
         tl = timeline.loc[(code, cat)] if timeline is not None and (code, cat) in timeline.index else None
         if tl is not None:
             if pd.notna(tl["online"]):

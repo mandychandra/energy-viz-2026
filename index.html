@@ -51,7 +51,7 @@
   /* ---- modals ---- */
   .modal { display: none; position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.55); align-items: center; justify-content: center; padding: 16px; }
   .modal.open { display: flex; }
-  .modal .box { background: #fff; color: #111; border-radius: 10px; max-width: 480px; width: 100%; padding: 20px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+  .modal .box { background: #fff; color: #111; border-radius: 10px; max-width: 480px; width: 100%; max-height: 100%; overflow-y: auto; box-sizing: border-box; padding: 20px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.6); }
   .modal h2 { margin: 0 0 10px; font-size: 20px; }
   .modal p { line-height: 1.45; margin: 0 0 12px; }
   .modal .actions { text-align: right; }
@@ -116,7 +116,7 @@
 
 <div class="modal" id="m-hydro"><div class="box">
   <h2>💧 Hydro follows the water</h2>
-  <p>Hydroelectric output has no growth trend: it moves between about 217 and 319 TWh a year, with large swings from one year to the next. Start at Grand Coulee on the Columbia River. This layer is conventional hydro only; pumped hydro is a separate storage layer.</p>
+  <p>Hydroelectric output has no growth trend: it moves between about 216 and 319 TWh a year, with large swings from one year to the next. Start at Grand Coulee on the Columbia River. This layer is conventional hydro only; pumped hydro is a separate storage layer.</p>
   <div class="actions"><button data-go="hydro">See the dams 🌊</button></div>
 </div></div>
 
@@ -150,6 +150,7 @@
   <div class="legend" id="legend"></div>
   <small>
     Data: US Energy Information Administration <a href="https://www.eia.gov/electricity/data/eia923/">Form EIA-923</a> (monthly generation and storage discharge, 2001–2025), <a href="https://www.eia.gov/electricity/data/eia860/">Form EIA-860</a> (plant locations, storage capacity) and <a href="https://www.eia.gov/electricity/data/eia860m/">EIA-860M</a> (in-service, retirement and planned dates). The latest year is EIA's early release; for the current year, plants that report only annually are shown at EIA's state-level estimates, allocated by their prior-year output.<br>
+    Generation is net of plants' own electricity use (EIA-923). Months when a plant used more power than it generated are negative in EIA's data; they are shown as no generation and left out of totals, which makes totals slightly higher than EIA's net figures (about 0.01% in 2025).<br>
     Built on Chris Loer's <a href="https://chrisloer.github.io/energy-viz/">2019 map</a> (<a href="https://medium.com/@chrisloer/how-i-built-it-us-electric-generation-map-ed8b2b682eed">how he built it</a>). Basemap © <a href="https://openfreemap.org">OpenFreeMap</a> / <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>; imagery © Esri.
   </small>
   <div class="actions"><button data-go="explore">Start looking 🕵️</button></div>
@@ -294,6 +295,11 @@ function labelField(cur) {
             ['concat', '\nsince ', ['to-string', ['floor', ['/', ['get', 'online'], 100]]]],
           ''],
         {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.8},
+        // months whose net generation is negative in EIA-923 (drawn without a circle); `neg` = ",YYYYMM,YYYYMM,"
+        ['case', ['all', ['in', `,${cur},`, ['coalesce', ['get', 'neg'], '']], ['<', ['-', cur, ['get', 'last']], 100],
+                         ['any', ['!', ['has', 'retired']], ['>', ['get', 'retired'], cur], ['>=', ['get', 'last'], cur]]],
+          '\nno net generation this month', ''],
+        {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.75, 'text-color': '#cfcfcf'},
         // plants that only report annually: their current-year months are EIA state estimates
         ['case', ['all', ['has', 'est_from'], ['>=', cur, ['get', 'est_from']]], '\nestimated (annual reporter)', ''],
         {'text-font': ['literal', ['Noto Sans Italic']], 'font-scale': 0.75, 'text-color': '#cfcfcf'}];
