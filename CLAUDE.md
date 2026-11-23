@@ -146,6 +146,14 @@ Heatmap intensity per fuel = `0.5 × total TWh / fuel TWh` (reference year).
 `const TOUR = false` at the top of the script turns the page into a plain
 explorable map (no chapters or modals); the data layers are unaffected.
 
+## Annual page (annual.html)
+
+Separate page, linked from index.html, reading the same tiles plus `data/out/annual_twh.csv`.
+Annual/Monthly switch; annual sums the monthly/quarterly properties in the browser and scales
+brightness and circles to the average month. It is not strict annual net (negative months are
+zero). Save image copies the MapLibre canvas after a render and draws title, legend, notes and
+credits. Derived from index.html, so shared wording or styling changes must be made in both.
+
 ## Full-build results (Oct 28 2026, all 52 files)
 
 308 months Jan 2001–Aug 2026 (2026 completed from EIA state estimates, see above). 16,429 plants, 97.7 % with
