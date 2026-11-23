@@ -292,6 +292,7 @@ function updateFuelType() {
   const fuel = fuelSelect.value === ALL ? ALL : +fuelSelect.value;
   if (fuel === currentFuel) return;
   currentFuel = fuel;
+  setMin();
   setHeatmapIntensity(0);  // fade out, swap source, fade back in
   setTimeout(() => {
     let ratio = 1;
@@ -331,7 +332,12 @@ function currentYM() {   // in annual view: the year and its last month with dat
   const key = annual ? monthsOf(totals.years[+monthInput.value]).at(-1) : months[+monthInput.value];
   const [y, m] = key.split('_').map(Number); return {year: y, month: m};
 }
-function setRange(i) { monthInput.max = (annual ? totals.years : months).length - 1; monthInput.value = i; }
+// Storage has no data before 2014, so its slider (and Play) starts there.
+function setMin() {
+  const y = STORAGE_CATS.includes(currentFuel) ? totals.storage_data_start_year : totals.years[0];
+  monthInput.min = annual ? totals.years.indexOf(y) : months.indexOf(`${y}_0`);
+}
+function setRange(i) { monthInput.max = (annual ? totals.years : months).length - 1; setMin(); monthInput.value = i; }
 
 function updateAnnual() {
   const {year, month} = currentYM(), ms = monthsOf(year), n = ms.length;
@@ -414,7 +420,7 @@ syncBatteryNote();
 function resetTimers() { clearTimeout(timer); timer = null; $('play').textContent = '▶'; }
 function play() {
   resetTimers();
-  if (+monthInput.value >= +monthInput.max) { monthInput.value = 0; updateMonth(); }
+  if (+monthInput.value >= +monthInput.max) { monthInput.value = monthInput.min; updateMonth(); }
   $('play').textContent = '❚❚';
   const step = () => {
     if (+monthInput.value >= +monthInput.max) return resetTimers();
