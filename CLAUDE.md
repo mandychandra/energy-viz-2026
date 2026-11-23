@@ -129,7 +129,7 @@ python3 pipeline/serve.py         # local test at http://localhost:8000 (plain h
 Ported from Chris's page: heatmap (z0–10, quarterly tiles interpolated monthly via
 `heatmap-weight`), per-fuel tileset swap with an intensity fade, circles (z9+) with
 radius `sqrt(monthly MWh)/5` at z16, labels in a separate source (label layout is
-only refreshed when zoom ≥ 9.5), satellite fading in z8–12, hash URL, 6-chapter tour.
+only refreshed when zoom ≥ 9.5), satellite fading in z8–12, hash URL, 9-chapter tour.
 Heatmap intensity per fuel = `0.5 × total TWh / fuel TWh` (reference year).
 `const TOUR = false` at the top of the script turns the page into a plain
 explorable map (no chapters or modals); the data layers are unaffected.

@@ -43,6 +43,7 @@
   #tour button { background: var(--panel); color: var(--ink); border: 1px solid #333; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; }
   #tour button.active { background: var(--accent); border-color: var(--accent); }
   #tour button span { display: none; }
+  @media (max-width: 639px) { #tour { gap: 3px; } #tour button { padding: 8px 6px; } }
   @media (min-width: 640px) { #tour button span { display: inline; margin-left: 4px; } }
   #restart { display: none; position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 5;
     background: var(--panel); color: var(--ink); border: 1px solid #333; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
@@ -83,12 +84,15 @@
 </div>
 
 <nav id="tour" aria-label="Tour">
-  <button data-chapter="intro" class="active">⚡<span>Overview</span></button>
-  <button data-chapter="solar">☀️<span>Solar</span></button>
-  <button data-chapter="wind">🌬️<span>Wind</span></button>
-  <button data-chapter="nuclear">☢️<span>Nuclear</span></button>
-  <button data-chapter="storage">🔋<span>Batteries</span></button>
-  <button data-chapter="explore">🔎<span>Explore</span></button>
+  <button data-chapter="intro" title="Overview" aria-label="Overview" class="active">⚡<span>Overview</span></button>
+  <button data-chapter="coal" title="Coal" aria-label="Coal">🏭<span>Coal</span></button>
+  <button data-chapter="gas" title="Natural Gas" aria-label="Natural Gas">🔥<span>Natural Gas</span></button>
+  <button data-chapter="nuclear" title="Nuclear" aria-label="Nuclear">☢️<span>Nuclear</span></button>
+  <button data-chapter="hydro" title="Hydroelectric" aria-label="Hydroelectric">💧<span>Hydroelectric</span></button>
+  <button data-chapter="wind" title="Wind" aria-label="Wind">🌬️<span>Wind</span></button>
+  <button data-chapter="solar" title="Solar" aria-label="Solar">☀️<span>Solar</span></button>
+  <button data-chapter="storage" title="Batteries" aria-label="Batteries">🔋<span>Batteries</span></button>
+  <button data-chapter="explore" title="Explore" aria-label="Explore">🔎<span>Explore</span></button>
 </nav>
 <button id="restart">Revisit tour</button>
 
@@ -96,6 +100,24 @@
   <h2>⚡ A quarter century of electricity</h2>
   <p>US electricity generation hovered around 4 PWh a year for two decades — then started climbing again with data centers and electrification. Underneath that flat line is a complete reshuffling: coal collapsed, gas and wind surged, solar went from a rounding error to a major source, and in the last five years batteries appeared out of nowhere.</p>
   <div class="actions"><button data-go="intro">Show me ✨</button></div>
+</div></div>
+
+<div class="modal" id="m-coal"><div class="box">
+  <h2>🏭 The decline of coal</h2>
+  <p>Coal supplied about half of US generation in 2001 and peaked at 2,017 TWh in 2007. By 2024 it was down to 652 TWh, before rising to 733 TWh in 2025 — about a sixth of the total. Watch the Ohio Valley dim, then the rest of the country.</p>
+  <div class="actions"><button data-go="coal">Watch it fade 📉</button></div>
+</div></div>
+
+<div class="modal" id="m-gas"><div class="box">
+  <h2>🔥 Gas takes over</h2>
+  <p>Natural gas generation nearly tripled, from 637 TWh in 2001 to 1,879 TWh in 2024, with 1,817 TWh in 2025. It passed coal as the largest source in 2016 and now supplies about two-fifths of US generation.</p>
+  <div class="actions"><button data-go="gas">Follow the gas 🔥</button></div>
+</div></div>
+
+<div class="modal" id="m-hydro"><div class="box">
+  <h2>💧 Hydro follows the water</h2>
+  <p>Hydroelectric output has no growth trend: it moves between about 217 and 319 TWh a year, with large swings from one year to the next. Start at Grand Coulee on the Columbia River. This layer is conventional hydro only; pumped hydro is a separate storage layer.</p>
+  <div class="actions"><button data-go="hydro">See the dams 🌊</button></div>
 </div></div>
 
 <div class="modal" id="m-solar"><div class="box">
@@ -423,21 +445,36 @@ const indexOfYear = y => Math.max(0, months.findIndex(m => +m.split('_')[0] === 
 
 const chapters = {
   intro() {
-    setFuel(ALL); animate(0, 8, () => openModal('solar'));
+    setFuel(ALL); animate(0, 8, () => openModal('coal'));
     map.fitBounds(US_BOUNDS);
   },
+  coal() {
+    setFuel(1); animate(0, 2, () => openModal('gas'));
+    map.fitBounds([[-89, 36], [-78, 42]]);                         // Ohio Valley
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 8000}), 5000));
+  },
+  gas() {
+    setFuel(0); animate(0, 2, () => openModal('nuclear'));
+    map.fitBounds([[-100, 26], [-88, 34]]);                        // Texas and the Gulf Coast
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 8000}), 5000));
+  },
+  hydro() {
+    setFuel(3); animate(0, 2, () => openModal('wind'));
+    map.flyTo({center: [-118.982, 47.957], zoom: 9.5});            // Grand Coulee, WA
+    navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 8000}), 5000));
+  },
   solar() {
-    setFuel(5); animate(0, 2, () => openModal('wind'));
+    setFuel(5); animate(0, 2, () => openModal('storage'));
     map.flyTo({center: [-117.4476, 35.0106], zoom: 9.8});          // early Mojave plants
     navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 10000}), 5000));
   },
   wind() {
-    setFuel(4); animate(0, 2, () => openModal('nuclear'));
+    setFuel(4); animate(0, 2, () => openModal('solar'));
     map.flyTo({center: [-96.2652, 44.267], zoom: 9.5});            // Buffalo Ridge, MN
     navTimers.push(setTimeout(() => map.fitBounds(US_BOUNDS, {duration: 10000}), 3000));
   },
   nuclear() {
-    setFuel(2); animate(0, 2, () => openModal('storage'));
+    setFuel(2); animate(0, 2, () => openModal('hydro'));
     map.fitBounds(US_BOUNDS);
     navTimers.push(setTimeout(() => map.fitBounds([[-112.9721, 33.4462], [-112.814, 33.2811]], {duration: 6000}), 6000)); // Palo Verde
   },
